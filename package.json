@@ -1,6 +1,7 @@
 {
   "name": "ai-chat",
   "private": true,
+  "packageManager": "pnpm@11.2.2",
   "scripts": {
     "dev": "concurrently -n ui,server -c cyan,green \"pnpm dev:ui\" \"pnpm dev:server\"",
     "dev:ui": "cd ui && pnpm dev",
