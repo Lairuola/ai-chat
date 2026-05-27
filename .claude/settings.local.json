@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚠️ PRE-FLIGHT: Check active cycles → Determine phase → Load skill → Confirm before acting'"
+          }
+        ]
+      }
+    ]
+  }
+}

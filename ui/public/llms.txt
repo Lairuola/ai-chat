@@ -1,0 +1,14 @@
+# AI 聊天助手
+
+基于 DeepSeek 的实时智能聊天应用，支持多会话管理、流式输出、代码高亮。
+
+- [聊天主界面](https://example.com/)
+- [API 接口](https://example.com/api/chat)
+- [WebSocket 服务](wss://example.com/ws)
+
+## 功能
+- 多会话管理：创建、切换、删除会话
+- 流式输出：AI 回复实时显示
+- 代码高亮：支持多种编程语言
+- 深色/浅色主题切换
+- 消息复制、会话搜索

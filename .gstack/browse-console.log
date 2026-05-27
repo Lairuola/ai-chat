@@ -1,0 +1,15 @@
+[2026-05-26T09:58:21.513Z] [debug] [vite] connecting...
+[2026-05-26T09:58:21.568Z] [debug] [vite] connected.
+[2026-05-26T09:58:21.669Z] [info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[2026-05-26T09:58:21.855Z] [warning] WebSocket connection to 'ws://localhost:3090/' failed: WebSocket is closed before the connection is established.
+[2026-05-26T09:59:15.316Z] [debug] [vite] hot updated: /src/components/ConversationList.tsx
+[2026-05-26T09:59:15.316Z] [debug] [vite] hot updated: /src/index.css
+[2026-05-26T09:59:22.813Z] [debug] [vite] hot updated: /src/components/ConversationList.tsx
+[2026-05-26T09:59:22.813Z] [debug] [vite] hot updated: /src/index.css
+[2026-05-26T09:59:36.289Z] [debug] [vite] connecting...
+[2026-05-26T09:59:36.289Z] [info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[2026-05-26T09:59:36.363Z] [warning] WebSocket connection to 'ws://localhost:3090/' failed: WebSocket is closed before the connection is established.
+[2026-05-26T09:59:36.364Z] [debug] [vite] connected.
+[2026-05-26T09:59:48.373Z] [debug] [vite] hot updated: /src/index.css
+[2026-05-26T10:00:05.402Z] [debug] [vite] hot updated: /@fs/E:\workspace\program\ai-chat\ui\src\components\ChatInput.tsx
+[2026-05-26T10:00:05.402Z] [debug] [vite] hot updated: /src/index.css

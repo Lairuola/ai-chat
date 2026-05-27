@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "modelVersion": "2.0",
+  "installedAt": "2026-05-26T10:10:10.210Z",
+  "updatedAt": "2026-05-26T10:10:10.210Z",
+  "complete": true,
+  "skills": [
+    "create",
+    "define",
+    "deliver",
+    "design-system",
+    "documentation",
+    "references",
+    "research",
+    "understand",
+    "validate"
+  ],
+  "docs": true,
+  "hooks": true
+}

@@ -1,0 +1,1 @@
+{"name":"ai-chat-server","private":true,"type":"module","scripts":{"start":"node server.js","start:dev":"node --env-file .env server.js"},"dependencies":{"ws":"^8.18.0"},"devDependencies":{"vitest":"^4.1.7"}}

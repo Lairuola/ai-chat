@@ -1,0 +1,6 @@
+shellEmulator: true
+
+trustPolicy: tinyexec
+
+allowBuilds:
+  esbuild: true

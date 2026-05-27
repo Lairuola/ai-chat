@@ -1,0 +1,2 @@
+{"ts":"2026-05-26T10:00:33.162Z","cmd":"js","args":"JSON.stringify([...document.querySelectorAll('a,button,input,[role=button]')].filter(e => {const r=e.getBoundingClientRect(); return r.width>0 && (r.width<44||r.height<44)}).map(e => ({tag:e.tagName, …","origin":"about:blank","durationMs":3,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-26T10:00:33.328Z","cmd":"js","args":"getComputedStyle(document.body).fontFamily","origin":"about:blank","durationMs":2,"status":"ok","hasCookies":false,"mode":"launched"}

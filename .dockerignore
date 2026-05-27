@@ -1,0 +1,15 @@
+node_modules
+.git
+.gitignore
+*.md
+.env
+.env.local
+artifacts
+bridge
+conversations
+docs
+ui/node_modules
+ui/src
+ui/public
+ui/.env
+server/.env

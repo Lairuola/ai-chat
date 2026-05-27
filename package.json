@@ -1,0 +1,18 @@
+{
+  "name": "ai-chat",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n ui,server -c cyan,green \"pnpm dev:ui\" \"pnpm dev:server\"",
+    "dev:ui": "cd ui && pnpm dev",
+    "dev:server": "cd server && pnpm start:dev",
+    "build": "cd ui && pnpm build",
+    "typecheck": "cd ui && pnpm typecheck",
+    "lint": "cd ui && pnpm lint",
+    "fix": "cd ui && pnpm fix",
+    "test": "cd ui && pnpm test && cd ../server && npx vitest run",
+    "test:watch": "cd ui && pnpm test:watch"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "ai-chat-wechat",
+  "colors": {
+    "bg": "#f5f6f8",
+    "surface": "#ffffff",
+    "border": "#e8ecf1",
+    "text": "#1a1a2e",
+    "textSecondary": "#5b5d6b",
+    "textMuted": "#999ba8",
+    "primary": "#7c8db5",
+    "primaryHover": "#6b7daa",
+    "userBubble": "#dce3f0",
+    "aiBubble": "#ffffff",
+    "aiBorder": "#e8ecf1",
+    "userAvatar": "#7c8db5",
+    "aiAvatar": "#6b7daa",
+    "sidebarBg": "#f0f1f5",
+    "online": "#2ecc71",
+    "danger": "#e74c3c"
+  },
+  "fonts": {
+    "display": "Satoshi",
+    "body": "DM Sans",
+    "mono": "JetBrains Mono",
+    "loading": "https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&display=swap | https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700"
+  },
+  "spacing": [4, 8, 12, 16, 20, 24, 32, 40, 48],
+  "radii": { "sm": 4, "md": 8, "lg": 16, "xl": 20, "full": 9999 },
+  "shadows": {
+    "bubble": "0 1px 2px rgba(0,0,0,.04)",
+    "card": "0 2px 8px rgba(0,0,0,.04)"
+  }
+}

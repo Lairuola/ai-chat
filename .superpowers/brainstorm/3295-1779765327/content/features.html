@@ -1,0 +1,82 @@
+<h2>完整功能清单</h2>
+<p class="subtitle">结合你的补充和之前确认的设计</p>
+
+<div class="section">
+  <h3>核心功能</h3>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-body">
+        <h3>1. 微信式聊天界面</h3>
+        <p>左侧会话列表 + 右侧聊天窗口。<br>用户气泡 #dce3f0 / AI 气泡白底蓝边框 / 圆形头像 / 药丸输入栏</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>2. 多轮对话</h3>
+        <p>每个会话保留完整历史。<br>Claude 通过 conversations/{id}.json 读取上下文，对话连贯</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>3. 流式输出</h3>
+        <p>Claude 回复写入 outbox → server.js 逐字推送 WebSocket → 前端打字效果</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>4. 本地持久化</h3>
+        <p>conversations/{id}.json 保存完整历史。<br>刷新页面不丢失，切换会话秒加载</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>5. 会话管理</h3>
+        <p>新建 / 切换 / 删除会话。<br>每个会话独立对话，互不干扰</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h3>6. 清空对话</h3>
+        <p>一键清空当前会话消息。<br>会话保留，消息归零，重新开始</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>完整数据流</h3>
+  <div class="mockup">
+    <div class="mockup-body" style="padding:20px;font-size:13px;line-height:2;font-family:monospace;background:#fafbfc;">
+      <div style="margin-bottom:16px;color:#666;">用户点击发送 "帮我写代码"</div>
+
+      <div style="display:flex;gap:12px;margin-bottom:12px;">
+        <div style="background:#7c8db5;color:#fff;padding:8px 16px;border-radius:8px;">1. WS → server.js</div>
+        <div style="color:#999;">→</div>
+        <div style="background:#e8ecf1;padding:8px 16px;border-radius:8px;">2. 写 inbox/conv1.json</div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-bottom:12px;">
+        <div style="background:#7c8db5;color:#fff;padding:8px 16px;border-radius:8px;">3. /loop 检测到</div>
+        <div style="color:#999;">→</div>
+        <div style="background:#e8ecf1;padding:8px 16px;border-radius:8px;">4. Claude 读取历史 + 回复</div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-bottom:12px;">
+        <div style="background:#7c8db5;color:#fff;padding:8px 16px;border-radius:8px;">5. 写 outbox/conv1.json</div>
+        <div style="color:#999;">→</div>
+        <div style="background:#e8ecf1;padding:8px 16px;border-radius:8px;">6. server 逐字推送 WS</div>
+      </div>
+
+      <div style="display:flex;gap:12px;">
+        <div style="background:#7c8db5;color:#fff;padding:8px 16px;border-radius:8px;">7. 前端打字动画</div>
+        <div style="color:#999;">→</div>
+        <div style="background:#dce3f0;padding:8px 16px;border-radius:8px;">8. 归档 conversations/conv1.json</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:16px;">
+  <p class="subtitle">以上 6 项功能 + 架构 = 完整设计。确认后我写设计文档，开始实现。</p>
+</div>
