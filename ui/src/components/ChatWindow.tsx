@@ -1,9 +1,9 @@
-import { useState } from 'react'
 import type { Conversation } from '../types'
+import { useState } from 'react'
 import { ChatHeader } from './ChatHeader'
 import { ChatInput } from './ChatInput'
-import { MessageList } from './MessageList'
 import { ConfirmDialog } from './ConfirmDialog'
+import { MessageList } from './MessageList'
 
 interface Props {
   conversation: Conversation | null
@@ -17,6 +17,8 @@ interface Props {
   onDismissError: () => void
   onClear: () => void
   onOpenSidebar: () => void
+  onEdit?: (msgId: string, content: string) => void
+  onDelete?: (msgId: string) => void
 }
 
 export function ChatWindow({
@@ -31,6 +33,8 @@ export function ChatWindow({
   onDismissError,
   onClear,
   onOpenSidebar,
+  onEdit,
+  onDelete,
 }: Props) {
   const [showClearConfirm, setShowClearConfirm] = useState(false)
 
@@ -112,7 +116,7 @@ export function ChatWindow({
         </div>
       )}
 
-      <ChatHeader hasMessages={conversation.messages.length > 0} isStreaming={isStreaming} onClear={() => setShowClearConfirm(true)} onOpenSidebar={onOpenSidebar} />
+      <ChatHeader conversation={conversation} hasMessages={conversation.messages.length > 0} isStreaming={isStreaming} onClear={() => setShowClearConfirm(true)} onOpenSidebar={onOpenSidebar} />
 
       <MessageList
         conversation={conversation}
@@ -121,6 +125,8 @@ export function ChatWindow({
         isPending={isPending}
         error={error}
         onDismissError={onDismissError}
+        onEdit={onEdit}
+        onDelete={onDelete}
       />
 
       <ChatInput onSend={onSend} disabled={isStreaming || isPending || !isConnected} />

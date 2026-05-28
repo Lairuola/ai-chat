@@ -100,6 +100,9 @@ wss.on('connection', (ws) => {
       lastChat = now
       await handleChat(msg, ws)
     }
+    else if (msg.type === 'summarize') {
+      await handleSummarize(msg, ws)
+    }
   })
 })
 
@@ -169,6 +172,42 @@ async function handleChat({ convId, messages }, ws) {
 
   if (!streamed) {
     ws.send(JSON.stringify({ type: 'done', convId }))
+  }
+}
+
+const SUMMARIZE_PROMPT = {
+  role: 'system',
+  content: '根据对话内容生成一个简短标题（3-8个字），只返回标题本身，不要任何解释或标点。',
+}
+
+async function handleSummarize({ convId, messages }, ws) {
+  if (!DEEPSEEK_API_KEY) {
+    console.warn('[summarize] skipped: DEEPSEEK_API_KEY not set')
+    return
+  }
+
+  try {
+    const res = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: DEEPSEEK_MODEL,
+        messages: [SUMMARIZE_PROMPT, ...messages.slice(-4)],
+        stream: false,
+        max_tokens: 20,
+      }),
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    const title = data?.choices?.[0]?.message?.content?.trim()
+    if (title) {
+      ws.send(JSON.stringify({ type: 'title', convId, title }))
+    }
+  } catch {
+    /* silently ignore — fallback title is fine */
   }
 }
 

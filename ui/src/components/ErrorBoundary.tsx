@@ -1,4 +1,5 @@
-import { Component, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { Component } from 'react'
 
 interface Props { children: ReactNode }
 interface State { hasError: boolean, error: Error | null }
@@ -11,7 +12,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   render() {
-    if (!this.state.hasError) return this.props.children
+    if (!this.state.hasError)
+      return this.props.children
 
     return (
       <div className="flex-1 flex items-center justify-center p-8" style={{ background: 'var(--bg)' }}>

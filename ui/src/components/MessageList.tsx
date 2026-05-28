@@ -1,7 +1,7 @@
 import type { Conversation } from '../types'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MessageBubble } from './MessageBubble'
 import { dateGroupLabel } from '../utils/time'
+import { MessageBubble } from './MessageBubble'
 
 function DateDivider({ label }: { label: string }) {
   return (
@@ -92,20 +92,24 @@ interface Props {
   isPending: boolean
   error: string | null
   onDismissError: () => void
+  onEdit?: (msgId: string, content: string) => void
+  onDelete?: (msgId: string) => void
 }
 
 /* ─── Component ─── */
 
-export function MessageList({ conversation, isStreaming, isPending, error, onDismissError }: Props) {
+export function MessageList({ conversation, isStreaming, isPending, error, onDismissError, onEdit, onDelete }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
 
   /* Auto-scroll when new content arrives and user is near bottom */
   useEffect(() => {
-    if (conversation.messages.length === 0 && !isPending) return
+    if (conversation.messages.length === 0 && !isPending)
+      return
     const el = containerRef.current
-    if (!el) return
+    if (!el)
+      return
     const threshold = isStreaming ? 300 : 150
     const dist = el.scrollHeight - el.scrollTop - el.clientHeight
     if (dist < threshold) {
@@ -116,14 +120,16 @@ export function MessageList({ conversation, isStreaming, isPending, error, onDis
   /* Track scroll position to show/hide back-to-bottom button */
   const handleScroll = useCallback(() => {
     const el = containerRef.current
-    if (!el) return
+    if (!el)
+      return
     setShowScrollBtn(el.scrollHeight - el.scrollTop - el.clientHeight > 300)
   }, [])
 
   /* Check scroll position on mount / when messages change (e.g. switching convs) */
   useEffect(() => {
     const el = containerRef.current
-    if (!el) return
+    if (!el)
+      return
     requestAnimationFrame(() => {
       setShowScrollBtn(el.scrollHeight - el.clientHeight > 300)
     })
@@ -158,10 +164,10 @@ export function MessageList({ conversation, isStreaming, isPending, error, onDis
       <div key={msg.id} className="mb-4">
         {msg.role === 'assistant' && isStreaming && i === messages.length - 1
           ? (
-              <MessageBubble message={msg} isStreaming />
+              <MessageBubble message={msg} isStreaming onEdit={onEdit} onDelete={onDelete} />
             )
           : (
-              <MessageBubble message={msg} />
+              <MessageBubble message={msg} onEdit={onEdit} onDelete={onDelete} />
             )}
       </div>,
     )

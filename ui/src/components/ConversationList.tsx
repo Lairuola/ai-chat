@@ -1,5 +1,5 @@
 import type { Conversation } from '../types'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { dateGroupLabel, formatRelativeTime } from '../utils/time'
 
 interface Props {
@@ -34,19 +34,23 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
 
   /* Focus trap for mobile sidebar */
   useEffect(() => {
-    if (!sidebarOpen) return
+    if (!sidebarOpen)
+      return
     const el = sidebarRef.current
-    if (!el) return
+    if (!el)
+      return
     const focusable = el.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
     const first = focusable[0]
     const last = focusable[focusable.length - 1]
     first?.focus()
 
     const trap = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return
+      if (e.key !== 'Tab')
+        return
       if (e.shiftKey) {
         if (document.activeElement === first) { e.preventDefault(); last?.focus() }
-      } else {
+      }
+      else {
         if (document.activeElement === last) { e.preventDefault(); first?.focus() }
       }
     }
@@ -57,9 +61,11 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
   /* ── Filter by search ── */
   const q = search.trim().toLowerCase()
   const filtered = useMemo(() => {
-    if (!q) return conversations
+    if (!q)
+      return conversations
     return conversations.filter((c) => {
-      if (c.title.toLowerCase().includes(q)) return true
+      if (c.title.toLowerCase().includes(q))
+        return true
       return c.messages.some(m => m.content.toLowerCase().includes(q))
     })
   }, [conversations, q])
@@ -101,11 +107,11 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
             </svg>
           </button>
           <svg width="22" height="22" viewBox="0 0 32 32" style={{ flexShrink: 0 }}>
-            <rect rx="6" width="32" height="32" fill="#0070F3"/>
-            <path d="M8 11a2 2 0 012-2h12a2 2 0 012 2v6a2 2 0 01-2 2h-8l-4 3v-3h-2a2 2 0 01-2-2z" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round"/>
-            <circle cx="12" cy="14" r="1.2" fill="#fff"/>
-            <circle cx="16" cy="14" r="1.2" fill="#fff"/>
-            <circle cx="20" cy="14" r="1.2" fill="#fff"/>
+            <rect rx="6" width="32" height="32" fill="#0070F3" />
+            <path d="M8 11a2 2 0 012-2h12a2 2 0 012 2v6a2 2 0 01-2 2h-8l-4 3v-3h-2a2 2 0 01-2-2z" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round" />
+            <circle cx="12" cy="14" r="1.2" fill="#fff" />
+            <circle cx="16" cy="14" r="1.2" fill="#fff" />
+            <circle cx="20" cy="14" r="1.2" fill="#fff" />
           </svg>
           <h2 className="font-bold text-base tracking-tight" style={{ color: 'var(--text)' }}>
             AI 助手
@@ -140,7 +146,13 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
         <div className="relative">
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
             style={{ color: 'var(--text-muted)' }}
           >
             <circle cx="11" cy="11" r="8" />

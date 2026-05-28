@@ -10,7 +10,7 @@ afterEach(cleanup)
 
 /* ─── ErrorBoundary ─── */
 
-describe('ErrorBoundary', () => {
+describe('errorBoundary', () => {
   it('正常渲染子组件', () => {
     const { container } = render(<ErrorBoundary><div>正常内容</div></ErrorBoundary>)
     expect(container.textContent).toContain('正常内容')
@@ -36,7 +36,7 @@ describe('ErrorBoundary', () => {
 
 /* ─── ChatHeader ─── */
 
-describe('ChatHeader', () => {
+describe('chatHeader', () => {
   it('有消息时显示清空按钮', () => {
     render(<ChatHeader hasMessages onClear={vi.fn()} onOpenSidebar={vi.fn()} />)
     expect(screen.getByTitle('清空当前对话')).toBeInTheDocument()
@@ -83,7 +83,7 @@ const convNoMsgs: Conversation = {
   updatedAt: 2000,
 }
 
-describe('MessageList', () => {
+describe('messageList', () => {
   it('空会话显示空白引导', () => {
     render(<MessageList conversation={convNoMsgs} isConnected isStreaming={false} isPending={false} error={null} onDismissError={vi.fn()} />)
     expect(screen.getByText('开始对话')).toBeInTheDocument()
@@ -122,7 +122,7 @@ describe('MessageList', () => {
 
 /* ─── ChatWindow ─── */
 
-describe('ChatWindow', () => {
+describe('chatWindow', () => {
   const defaultProps = {
     isConnected: true,
     retriesExhausted: false,

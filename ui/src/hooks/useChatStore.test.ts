@@ -1,6 +1,6 @@
-import { act, renderHook } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import type { WsInMessage } from '../types'
+import { act, renderHook } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useChatStore } from './useChatStore'
 
 beforeEach(() => {
@@ -198,8 +198,7 @@ describe('useChatStore', () => {
     act(() => { result.current.addMessage(convId, 'user', '上一条') })
     act(() => { result.current.addMessage(convId, 'assistant', '回复') })
     act(() => { result.current.sendMessage('再来一条', sendFn) })
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const callArg = (sendFn as Mock).mock.calls[0]![0] as WsInMessage
+    const callArg = (sendFn as unknown as { mock: { calls: Array<[WsInMessage]> } }).mock.calls[0]![0]
     expect(callArg?.messages).toHaveLength(3)
     expect(callArg?.messages[0].content).toBe('上一条')
   })

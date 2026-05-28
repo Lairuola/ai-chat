@@ -1,11 +1,30 @@
+import type { Conversation } from '../types'
+
 interface Props {
+  conversation?: Conversation | null
   hasMessages?: boolean
   isStreaming?: boolean
   onClear?: () => void
   onOpenSidebar?: () => void
 }
 
-export function ChatHeader({ hasMessages, isStreaming, onClear, onOpenSidebar }: Props) {
+function exportMarkdown(conv: Conversation) {
+  const lines: string[] = [`# ${conv.title}`, '']
+  for (const m of conv.messages) {
+    const label = m.role === 'user' ? '**你**' : '**AI**'
+    lines.push(`${label}：`, '', m.content, '')
+  }
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  const safeName = (conv.title || '对话').slice(0, 20).replace(/[/\\?%*:|"<>]/g, '_') || '对话'
+  a.download = `${safeName}.md`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+export function ChatHeader({ conversation, hasMessages, isStreaming, onClear, onOpenSidebar }: Props) {
   return (
     <div
       className="shrink-0 flex items-center select-none px-6"
@@ -40,6 +59,22 @@ export function ChatHeader({ hasMessages, isStreaming, onClear, onOpenSidebar }:
       </span>
 
       <div className="flex-1" />
+
+      {hasMessages && conversation && (
+        <button
+          onClick={() => exportMarkdown(conversation)}
+          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:bg-[var(--surface-hover)] active:scale-90"
+          style={{ color: 'var(--text-muted)' }}
+          aria-label="导出对话"
+          title="导出为 Markdown"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </button>
+      )}
 
       {hasMessages && onClear && (
         <button

@@ -25,6 +25,9 @@ type ChatAction
     | { type: 'DELETE_CONV', id: string }
     | { type: 'CLEAR_CONV', id: string }
     | { type: 'ADD_MESSAGE', convId: string, role: 'user' | 'assistant', content: string }
+    | { type: 'SET_TITLE', convId: string, title: string }
+    | { type: 'EDIT_MESSAGE', convId: string, msgId: string, content: string }
+    | { type: 'DELETE_MESSAGE', convId: string, msgId: string }
     | { type: 'STREAM_CHUNK', convId: string, chunk: string }
     | { type: 'STREAM_DONE', convId: string }
     | { type: 'SYNC', conversations: Conversation[] }
@@ -90,6 +93,42 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
       }
     }
 
+    case 'SET_TITLE':
+      return {
+        ...state,
+        conversations: state.conversations.map(c =>
+          c.id === action.convId ? { ...c, title: action.title, updatedAt: Date.now() } : c,
+        ),
+      }
+
+    case 'EDIT_MESSAGE':
+      return {
+        ...state,
+        conversations: state.conversations.map(c =>
+          c.id !== action.convId ? c
+            : {
+                ...c,
+                messages: c.messages.map(m =>
+                  m.id === action.msgId ? { ...m, content: action.content } : m,
+                ),
+                updatedAt: Date.now(),
+              },
+        ),
+      }
+
+    case 'DELETE_MESSAGE':
+      return {
+        ...state,
+        conversations: state.conversations.map(c =>
+          c.id !== action.convId ? c
+            : {
+                ...c,
+                messages: c.messages.filter(m => m.id !== action.msgId),
+                updatedAt: Date.now(),
+              },
+        ),
+      }
+
     case 'STREAM_CHUNK': {
       const { convId, chunk } = action
       return {
@@ -151,7 +190,8 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
 function load(): Conversation[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
+    if (!raw)
+      return []
     return JSON.parse(raw)
   }
   catch {
@@ -215,13 +255,23 @@ export function useChatStore() {
     handleStreamDone: (convId: string) =>
       dispatch({ type: 'STREAM_DONE', convId }),
 
+    setTitle: (convId: string, title: string) =>
+      dispatch({ type: 'SET_TITLE', convId, title }),
+
+    editMessage: (convId: string, msgId: string, content: string) =>
+      dispatch({ type: 'EDIT_MESSAGE', convId, msgId, content }),
+
+    deleteMessage: (convId: string, msgId: string) =>
+      dispatch({ type: 'DELETE_MESSAGE', convId, msgId }),
+
     syncAll: (conversations: Conversation[]) =>
       dispatch({ type: 'SYNC', conversations }),
 
     /* ── high-level send (with conversation history for AI) ── */
     sendMessage: (content: string, sendFn: (msg: WsInMessage) => boolean) => {
       const contentTrimmed = content.trim()
-      if (!contentTrimmed) return
+      if (!contentTrimmed)
+        return
 
       let convId = state.activeId
       let history: { role: 'user' | 'assistant', content: string }[] = []

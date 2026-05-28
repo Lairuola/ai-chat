@@ -1,6 +1,6 @@
 shellEmulator: true
 
-trustPolicy: tinyexec
+trustPolicy: no-downgrade
 
 allowBuilds:
   esbuild: true

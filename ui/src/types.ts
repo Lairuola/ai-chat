@@ -14,7 +14,7 @@ export interface Conversation {
 }
 
 export interface WsInMessage {
-  type: 'chat'
+  type: 'chat' | 'summarize'
   convId: string
   messages: { role: 'user' | 'assistant', content: string }[]
 }
@@ -22,4 +22,5 @@ export interface WsInMessage {
 export type WsOutMessage
   = | { type: 'stream', convId: string, chunk: string }
     | { type: 'done', convId: string }
+    | { type: 'title', convId: string, title: string }
     | { type: 'error', convId: string, message: string }

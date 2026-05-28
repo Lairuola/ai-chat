@@ -12,5 +12,7 @@ export default antfu({
     'style/max-statements-per-line': 'off',
     'style/multiline-ternary': 'off',
     'react-dom/no-missing-button-type': 'off',
+    'test/prefer-lowercase-title': 'off',
   },
+  ignores: ['stats.json'],
 })

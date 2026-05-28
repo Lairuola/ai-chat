@@ -1,5 +1,5 @@
-import '@testing-library/jest-dom/vitest'
 import { vi } from 'vitest'
+import '@testing-library/jest-dom/vitest'
 
 // jsdom doesn't implement scrollIntoView
 Element.prototype.scrollIntoView = vi.fn()

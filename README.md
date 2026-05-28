@@ -1,6 +1,18 @@
 # AI 聊天助手
 
-基于 React 19 + DeepSeek API 的实时 AI 聊天应用，支持流式输出、多轮对话、深色/浅色主题。
+基于 DeepSeek API + React 19 的实时 AI 聊天应用，支持流式对话、Markdown 渲染、代码高亮、多会话管理、消息编辑、AI 标题生成、导出对话。
+
+## 特性
+
+- **流式对话** — 实时流式输出，打字机效果
+- **Markdown 渲染** — 支持代码高亮、表格、列表、引用等
+- **多会话管理** — 创建、切换、清空、删除会话
+- **消息编辑/删除** — 发送后可编辑或删除消息
+- **AI 标题生成** — 自动为对话生成标题（3-8 字）
+- **导出对话** — 一键导出为 Markdown 文件
+- **深色/浅色主题** — 自由切换
+- **响应式布局** — 桌面和移动端适配
+- **自动重连** — WebSocket 断线指数退避重试
 
 ## 项目结构
 
@@ -13,71 +25,73 @@ ai-chat/
 │   │   ├── index.css                   # 全局样式 + 主题变量 + 动画
 │   │   ├── types.ts                    # TypeScript 类型定义
 │   │   ├── components/
-│   │   │   ├── ChatHeader.tsx          # 顶部栏：模型名、汉堡菜单、清空按钮
+│   │   │   ├── ChatHeader.tsx          # 顶部栏：模型名、清空、导出
 │   │   │   ├── ChatInput.tsx           # 消息输入框：自动伸缩、Enter 发送
-│   │   │   ├── ChatWindow.tsx          # 聊天主面板：消息列表 + 输入框 + 空状态
-│   │   │   ├── ConversationList.tsx    # 侧边栏：会话列表、日期分组、主题切换
-│   │   │   ├── MessageBubble.tsx       # 消息气泡：Markdown 渲染、代码高亮、时间戳
-│   │   │   ├── MessageList.tsx         # 消息列表：自动滚动、日期分割线、回到底部
-│   │   │   └── components.test.tsx     # 组件单元测试
+│   │   │   ├── ChatWindow.tsx          # 聊天主面板：消息列表 + 输入框
+│   │   │   ├── ConversationList.tsx    # 侧边栏：会话列表、主题切换
+│   │   │   ├── MessageBubble.tsx       # 消息气泡：Markdown、代码高亮、编辑/删除
+│   │   │   ├── MessageList.tsx         # 消息列表：自动滚动、日期分割线
+│   │   │   ├── ConfirmDialog.tsx       # 确认对话框
+│   │   │   └── ErrorBoundary.tsx       # 错误边界
 │   │   ├── hooks/
 │   │   │   ├── useChatStore.ts         # 会话状态管理（useReducer + localStorage）
-│   │   │   ├── useChatStore.test.ts    # 状态管理测试
 │   │   │   └── useWebSocket.ts         # WebSocket 连接 + 自动重连
 │   │   └── utils/
-│   │       └── time.ts                # 日期/时间格式化工具
+│   │       └── time.ts                # 日期/时间格式化
 │   ├── index.html
 │   ├── package.json
 │   └── tsconfig.json
 ├── server/
-│   ├── server.js               # WebSocket 服务器（转发 DeepSeek API）
-│   ├── server.test.js          # 服务端测试
-│   ├── package.json
-│   └── .env                    # API Key 配置
-├── docs/                       # 设计文档
-├── bridge/                     # Claude Code 文件桥接（备用方案）
-└── conversations/              # 对话历史持久化（备用方案）
+│   ├── server.js               # HTTP + WebSocket 服务器（代理 DeepSeek API）
+│   └── package.json
+├── Dockerfile                  # 多阶段 Docker 构建
+├── .env.example                # 环境变量示例
+├── .github/workflows/ci.yml    # CI 工作流（Node 22/24）
+└── package.json                # 根工作区配置
 ```
 
 ## 快速开始
 
 ### 前置条件
 
-- Node.js >= 20.6
-- pnpm
+- Node.js >= 22
+- pnpm >= 11
 
-### 1. 配置 API Key
-
-```bash
-# 编辑 server/.env，填入 DeepSeek API Key
-cd server
-echo 'DEEPSEEK_API_KEY=sk-your-key-here' > .env
-```
-
-### 2. 启动后端
+### 安装
 
 ```bash
-cd server
+# 克隆仓库
+git clone <repo-url>
+cd ai-chat
+
+# 安装所有依赖
 pnpm install
-pnpm start        # 启动 WebSocket 服务 ws://localhost:3090
+cd ui && pnpm install && cd ..
+
+# 配置 API Key
+cp .env.example .env
+# 编辑 .env，填入 DEEPSEEK_API_KEY
 ```
 
-### 3. 启动前端
+### 开发
 
 ```bash
-cd ui
-pnpm install
-pnpm dev          # 启动开发服务器 http://localhost:5173
+# 同时启动前端和后端
+pnpm dev
+
+# 或分别启动
+pnpm dev:ui     # http://localhost:5173
+pnpm dev:server # ws://localhost:3090
 ```
 
-### 运行测试
+### 构建 & 测试
 
 ```bash
-cd ui
-pnpm test         # 运行单元测试（Vitest）
-pnpm typecheck    # TypeScript 类型检查
-pnpm lint         # ESLint 代码检查
-pmpn fix          # 自动修复 lint 问题
+pnpm build       # 构建前端（输出到 ui/dist/）
+pnpm test        # 运行测试
+pnpm typecheck   # TypeScript 类型检查
+pnpm lint        # ESLint 代码检查
+pnpm fix         # 自动修复 lint 问题
 ```
 
 ## 架构
@@ -89,6 +103,8 @@ pmpn fix          # 自动修复 lint 问题
 └──────────────────┘                 └──────────────┘                └──────────────┘
 ```
 
+生产模式下，同一 Node.js 服务同时提供静态文件（从 `ui/dist/` 输出）和 WebSocket 连接。
+
 ### 数据流
 
 1. 用户在 `ChatInput` 输入消息 → `useChatStore.sendMessage()`
@@ -98,6 +114,7 @@ pmpn fix          # 自动修复 lint 问题
 5. `useWebSocket.onMessage` 接收 → `useChatStore.handleStreamChunk()` 追加内容
 6. `MessageBubble` 实时渲染流式输出
 7. 流结束时发 `done` → `useChatStore.handleStreamDone()`
+8. 首次回复完成后，自动请求 AI 生成标题（`summarize` → `title`）
 
 ### 持久化
 
@@ -189,6 +206,15 @@ export default function App() {
 { "type": "error", "convId": "uuid", "message": "API key invalid" }
 ```
 
+**标题生成**
+
+```json
+// 客户端请求
+{ "type": "summarize", "convId": "uuid", "messages": [...] }
+// 服务端响应
+{ "type": "title", "convId": "uuid", "title": "新对话" }
+```
+
 ## 主题系统
 
 使用 CSS 变量实现深色/浅色双主题。深色为 `:root` 默认值，浅色为 `.light` 类覆盖。
@@ -223,13 +249,37 @@ export default function App() {
 | Enter 键 | 发送消息 |
 | Shift+Enter | 换行 |
 | 流式输出中 | 发送和清空按钮禁用 |
-| 未连接 | 输入框、+ 按钮禁用，显示重连按钮 |
+| 未连接 | 输入框禁用，显示重连按钮 |
 | 滚动查看历史 | 右下角出现回到底部按钮 |
 | 滚动距底 < 150px | 新消息自动滚动到底部 |
 | 消息 > 30 分钟间隔 | 日期分割线 |
-| 鼠标悬停消息 | 显示复制按钮 |
+| 鼠标悬停用户消息 | 显示编辑、删除、复制按钮 |
+| 鼠标悬停 AI 消息 | 显示复制按钮 |
+| 消息编辑 | Enter 保存，Escape 取消 |
 | 清空会话 | 弹出确认对话框 |
 | 复制不支持 | 降级到 `execCommand('copy')` |
+
+## 部署
+
+### Docker
+
+```bash
+docker build -t ai-chat .
+docker run -p 3090:3090 -e DEEPSEEK_API_KEY=your_key ai-chat
+```
+
+### 生产模式
+
+```bash
+pnpm build
+DEEPSEEK_API_KEY=your_key NODE_ENV=production node server/server.js
+```
+
+服务器默认监听 `3090` 端口，通过 `PORT` 环境变量配置。
+
+### CI
+
+GitHub Actions 自动运行类型检查、lint、测试和构建。Node 版本：22、24。
 
 ## 技术栈
 
@@ -240,7 +290,7 @@ export default function App() {
 | 构建 | Vite 6 |
 | 样式 | Tailwind CSS 4 + CSS 变量 |
 | Markdown | react-markdown + rehype-highlight |
-| 后端 | Node.js + ws |
+| 后端 | Node.js + http + ws |
 | AI 接口 | DeepSeek Chat API (流式) |
 | 测试 | Vitest + @testing-library/react |
 | 规范 | @antfu/eslint-config |

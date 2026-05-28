@@ -161,14 +161,14 @@ describe('messageBubble', () => {
     expect(inline).toBeTruthy()
   })
 
-  it('Markdown 段落渲染', () => {
+  it('markdown 段落渲染', () => {
     const pMsg: Message = { id: '5', role: 'assistant', content: '第一段\n\n第二段', timestamp: 1004 }
     render(<MessageBubble message={pMsg} />)
     const paras = document.querySelectorAll('p')
     expect(paras.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('Markdown 列表渲染', () => {
+  it('markdown 列表渲染', () => {
     const listMsg: Message = { id: '6', role: 'assistant', content: '- 项1\n- 项2\n- 项3', timestamp: 1005 }
     render(<MessageBubble message={listMsg} />)
     const list = document.querySelector('ul')
@@ -176,14 +176,14 @@ describe('messageBubble', () => {
     expect(list!.children.length).toBe(3)
   })
 
-  it('Markdown 有序列表渲染', () => {
+  it('markdown 有序列表渲染', () => {
     const olMsg: Message = { id: '7', role: 'assistant', content: '1. 第一\n2. 第二', timestamp: 1006 }
     render(<MessageBubble message={olMsg} />)
     const list = document.querySelector('ol')
     expect(list).toBeTruthy()
   })
 
-  it('Markdown 引用渲染', () => {
+  it('markdown 引用渲染', () => {
     const quoteMsg: Message = { id: '8', role: 'assistant', content: '> 这是一段引用', timestamp: 1007 }
     render(<MessageBubble message={quoteMsg} />)
     const blockquote = document.querySelector('blockquote')
@@ -191,7 +191,7 @@ describe('messageBubble', () => {
     expect(blockquote!.textContent).toContain('这是一段引用')
   })
 
-  it('Markdown 链接渲染', () => {
+  it('markdown 链接渲染', () => {
     const linkMsg: Message = { id: '9', role: 'assistant', content: '访问[示例](https://example.com)', timestamp: 1008 }
     render(<MessageBubble message={linkMsg} />)
     const link = document.querySelector('a')

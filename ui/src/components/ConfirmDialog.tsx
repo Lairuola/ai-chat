@@ -17,14 +17,16 @@ export function ConfirmDialog({ open, title, message, confirmLabel = '确定', c
     if (open) {
       confirmRef.current?.focus()
       const handler = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onCancel()
+        if (e.key === 'Escape')
+          onCancel()
       }
       document.addEventListener('keydown', handler)
       return () => document.removeEventListener('keydown', handler)
     }
   }, [open, onCancel])
 
-  if (!open) return null
+  if (!open)
+    return null
 
   return (
     <div
