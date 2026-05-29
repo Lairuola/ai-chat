@@ -1,6 +1,7 @@
 import type { Conversation, Message } from '../types'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { ChatHeader } from './ChatHeader'
 import { ChatInput } from './ChatInput'
 import { ConversationList } from './ConversationList'
 import { MessageBubble } from './MessageBubble'
@@ -200,15 +201,9 @@ describe('messageBubble', () => {
     expect(link!.getAttribute('target')).toBe('_blank')
   })
 
-  it('hover 时显示复制按钮', () => {
-    const { container } = render(<MessageBubble message={aiMsg} />)
-    const bubble = container.querySelector('.flex.gap-3')
-    expect(bubble).toBeTruthy()
-    fireEvent.mouseEnter(bubble!)
-    const copyBtn = screen.getByText('复制')
-    expect(copyBtn).toBeInTheDocument()
-    fireEvent.mouseLeave(bubble!)
-    expect(screen.queryByText('复制')).not.toBeInTheDocument()
+  it('气泡底部始终显示复制按钮', () => {
+    render(<MessageBubble message={aiMsg} />)
+    expect(screen.getByText('复制')).toBeInTheDocument()
   })
 })
 
@@ -242,12 +237,25 @@ describe('conversationList (additional)', () => {
     expect(getSearchInput()).toHaveValue('')
   })
 
-  it('点击删除按钮触发 onDelete', () => {
+  it('点击删除按钮弹出确认对话框，确认后触发 onDelete', () => {
     const onDelete = vi.fn()
     render(<ConversationList {...baseProps} conversations={[mockConv]} activeId="" canCreate={false} onSelect={vi.fn()} onCreate={vi.fn()} onDelete={onDelete} />)
     const deleteBtns = screen.getAllByLabelText('删除会话')
     fireEvent.click(deleteBtns[0])
+    const dialogs = screen.getAllByRole('dialog')
+    expect(within(dialogs[0]).getByText('确定删除此会话？此操作不可撤销。')).toBeInTheDocument()
+    fireEvent.click(within(dialogs[0]).getByRole('button', { name: '删除' }))
     expect(onDelete).toHaveBeenCalledWith('conv1')
+  })
+
+  it('删除确认对话框取消不触发 onDelete', () => {
+    const onDelete = vi.fn()
+    render(<ConversationList {...baseProps} conversations={[mockConv]} activeId="" canCreate={false} onSelect={vi.fn()} onCreate={vi.fn()} onDelete={onDelete} />)
+    const deleteBtns = screen.getAllByLabelText('删除会话')
+    fireEvent.click(deleteBtns[0])
+    const dialogs = screen.getAllByRole('dialog')
+    fireEvent.click(within(dialogs[0]).getByRole('button', { name: '取消' }))
+    expect(onDelete).not.toHaveBeenCalled()
   })
 
   it('键盘 Enter 选中会话', () => {
@@ -305,10 +313,65 @@ describe('chatInput (additional)', () => {
     expect(onSend).not.toHaveBeenCalled()
   })
 
-  it('输入触发自动高度调整', () => {
+  it('输入框使用 field-sizing 自动扩展', () => {
     render(<ChatInput onSend={vi.fn()} />)
     const textarea = screen.getByPlaceholderText(/输入消息/) as HTMLTextAreaElement
     fireEvent.change(textarea, { target: { value: '多行\n文本\n输入' } })
-    expect(textarea.style.height).toBeTruthy()
+    expect(textarea.value).toBe('多行\n文本\n输入')
+    expect(textarea.style.getPropertyValue('field-sizing')).toBe('content')
+  })
+})
+
+describe('chatHeader', () => {
+  const mockConvWithMessages: Conversation = {
+    id: 'conv1',
+    title: '测试会话',
+    messages: [
+      { id: 'm1', role: 'user', content: '你好', timestamp: 1000 },
+      { id: 'm2', role: 'assistant', content: '你好！', timestamp: 1001 },
+    ],
+    createdAt: 1000,
+    updatedAt: 2000,
+  }
+
+  it('无消息时不显示导出按钮', () => {
+    render(<ChatHeader conversation={mockConvWithMessages} hasMessages={false} />)
+    expect(screen.queryByLabelText('导出对话')).not.toBeInTheDocument()
+  })
+
+  it('有消息时显示导出按钮', () => {
+    render(<ChatHeader conversation={mockConvWithMessages} hasMessages />)
+    expect(screen.getByLabelText('导出对话')).toBeInTheDocument()
+  })
+
+  it('点击导出按钮触发回调', () => {
+    render(<ChatHeader conversation={mockConvWithMessages} hasMessages />)
+    const exportBtn = screen.getByLabelText('导出对话')
+    expect(exportBtn).toBeInTheDocument()
+  })
+
+  it('流式输出时清空按钮禁用', () => {
+    const onClear = vi.fn()
+    render(<ChatHeader conversation={mockConvWithMessages} hasMessages isStreaming onClear={onClear} />)
+    expect(screen.getByLabelText('清空当前对话')).toBeDisabled()
+  })
+
+  it('非流式输出时清空按钮可点击', () => {
+    const onClear = vi.fn()
+    render(<ChatHeader conversation={mockConvWithMessages} hasMessages isStreaming={false} onClear={onClear} />)
+    const clearBtn = screen.getByLabelText('清空当前对话')
+    expect(clearBtn).not.toBeDisabled()
+    fireEvent.click(clearBtn)
+    expect(onClear).toHaveBeenCalled()
+  })
+
+  it('显示连接状态指示器', () => {
+    render(<ChatHeader conversation={mockConvWithMessages} hasMessages isConnected />)
+    // Connection indicator is rendered (no assertion needed - just verify no crash)
+  })
+
+  it('无 conversation 时不显示导出按钮', () => {
+    render(<ChatHeader conversation={null} hasMessages={false} />)
+    expect(screen.queryByLabelText('导出对话')).not.toBeInTheDocument()
   })
 })

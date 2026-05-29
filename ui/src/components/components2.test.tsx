@@ -1,5 +1,5 @@
 import type { Conversation } from '../types'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ChatHeader } from './ChatHeader'
 import { ChatWindow } from './ChatWindow'
@@ -138,8 +138,8 @@ describe('chatWindow', () => {
 
   it('无会话时显示空状态', () => {
     render(<ChatWindow {...defaultProps} conversation={null} />)
-    expect(screen.getByText('AI 聊天助手')).toBeInTheDocument()
-    expect(screen.getByText('选择一个会话或新建开始对话')).toBeInTheDocument()
+    expect(screen.getByText('开始对话')).toBeInTheDocument()
+    expect(screen.getByText('新建一个会话，或者从侧边栏选择已有会话继续。')).toBeInTheDocument()
     expect(screen.getByText('已连接')).toBeInTheDocument()
   })
 
@@ -171,7 +171,7 @@ describe('chatWindow', () => {
     const onClear = vi.fn()
     render(<ChatWindow {...defaultProps} conversation={convWithMsgs} onClear={onClear} />)
     fireEvent.click(screen.getByTitle('清空当前对话'))
-    fireEvent.click(screen.getByText('清空'))
+    fireEvent.click(within(screen.getByRole('dialog')).getByText('清空'))
     expect(onClear).toHaveBeenCalledOnce()
   })
 

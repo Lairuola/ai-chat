@@ -68,7 +68,7 @@ export function ConfirmDialog({ open, title, message, confirmLabel = '确定', c
             className="px-4 py-2 rounded-md text-sm font-medium transition-all hover:opacity-80 active:scale-95"
             style={{
               background: 'var(--danger)',
-              color: '#fff',
+              color: 'var(--btn-color)',
             }}
           >
             {confirmLabel}

@@ -1,5 +1,5 @@
 import type { Conversation, Message, WsInMessage } from '../types'
-import { useEffect, useReducer } from 'react'
+import { useEffect, useMemo, useReducer } from 'react'
 
 const STORAGE_KEY = 'chat-conversations'
 
@@ -24,11 +24,14 @@ type ChatAction
     | { type: 'CREATE_CONV', id: string }
     | { type: 'DELETE_CONV', id: string }
     | { type: 'CLEAR_CONV', id: string }
-    | { type: 'ADD_MESSAGE', convId: string, role: 'user' | 'assistant', content: string }
+    | { type: 'ADD_MESSAGE', convId: string, role: 'user' | 'assistant', content: string, msgId: string }
     | { type: 'SET_TITLE', convId: string, title: string }
     | { type: 'EDIT_MESSAGE', convId: string, msgId: string, content: string }
     | { type: 'DELETE_MESSAGE', convId: string, msgId: string }
-    | { type: 'STREAM_CHUNK', convId: string, chunk: string }
+    | { type: 'UNDO_DELETE_MESSAGE', convId: string, message: Message }
+    | { type: 'MARK_MESSAGE_FAILED', convId: string, msgId: string }
+    | { type: 'CLEAR_MESSAGE_FAILED', convId: string, msgId: string }
+    | { type: 'STREAM_CHUNK', convId: string, chunk: string, msgId?: string }
     | { type: 'STREAM_DONE', convId: string }
     | { type: 'SYNC', conversations: Conversation[] }
     | { type: 'SET_PENDING', convId: string | null }
@@ -75,7 +78,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
     case 'ADD_MESSAGE': {
       const msg: Message = {
-        id: genId(),
+        id: action.msgId,
         role: action.role,
         content: action.content,
         timestamp: Date.now(),
@@ -129,6 +132,49 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         ),
       }
 
+    case 'UNDO_DELETE_MESSAGE':
+      return {
+        ...state,
+        conversations: state.conversations.map(c =>
+          c.id !== action.convId ? c
+            : {
+                ...c,
+                messages: [...c.messages, action.message],
+                updatedAt: Date.now(),
+              },
+        ),
+      }
+
+    case 'MARK_MESSAGE_FAILED':
+      return {
+        ...state,
+        conversations: state.conversations.map(c =>
+          c.id !== action.convId ? c
+            : {
+                ...c,
+                messages: c.messages.map(m =>
+                  m.id === action.msgId ? { ...m, failed: true } : m,
+                ),
+                updatedAt: Date.now(),
+              },
+        ),
+      }
+
+    case 'CLEAR_MESSAGE_FAILED':
+      return {
+        ...state,
+        conversations: state.conversations.map(c =>
+          c.id !== action.convId ? c
+            : {
+                ...c,
+                messages: c.messages.map(m =>
+                  m.id === action.msgId ? { ...m, failed: false } : m,
+                ),
+                updatedAt: Date.now(),
+              },
+        ),
+      }
+
     case 'STREAM_CHUNK': {
       const { convId, chunk } = action
       return {
@@ -146,13 +192,13 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
           }
           else {
             msgs.push({
-              id: genId(),
+              id: action.msgId ?? genId(),
               role: 'assistant',
               content: newContent,
               timestamp: Date.now(),
             })
           }
-          return { ...c, messages: msgs, updatedAt: Date.now() }
+          return { ...c, messages: msgs }
         }),
       }
     }
@@ -194,8 +240,11 @@ function load(): Conversation[] {
       return []
     return JSON.parse(raw)
   }
-  catch {
-    localStorage.removeItem(STORAGE_KEY)
+  catch (e) {
+    const isJsonError = e instanceof SyntaxError
+    console.warn(`[useChatStore] load: ${isJsonError ? 'JSON parse error, clearing' : 'read error'} —`, e instanceof Error ? e.message : e)
+    if (isJsonError)
+      localStorage.removeItem(STORAGE_KEY)
     return []
   }
 }
@@ -220,8 +269,14 @@ export function useChatStore() {
     catch { /* ignore */ }
   }, [state.conversations])
 
-  const activeConv = state.conversations.find(c => c.id === state.activeId) || null
-  const canCreate = state.conversations.length === 0 || state.conversations.every(c => c.messages.length > 0)
+  const activeConv = useMemo(() =>
+    state.conversations.find(c => c.id === state.activeId) || null,
+    [state.conversations, state.activeId],
+  )
+  const canCreate = useMemo(() =>
+    state.conversations.length === 0 || state.conversations.every(c => c.messages.length > 0),
+    [state.conversations],
+  )
 
   return {
     /* ── state ── */
@@ -246,11 +301,11 @@ export function useChatStore() {
     deleteConv: (id: string) => dispatch({ type: 'DELETE_CONV', id }),
     clearConv: (id: string) => dispatch({ type: 'CLEAR_CONV', id }),
 
-    addMessage: (convId: string, role: 'user' | 'assistant', content: string) =>
-      dispatch({ type: 'ADD_MESSAGE', convId, role, content }),
+    addMessage: (convId: string, role: 'user' | 'assistant', content: string, msgId: string) =>
+      dispatch({ type: 'ADD_MESSAGE', convId, role, content, msgId }),
 
-    handleStreamChunk: (convId: string, chunk: string) =>
-      dispatch({ type: 'STREAM_CHUNK', convId, chunk }),
+    handleStreamChunk: (convId: string, chunk: string, msgId?: string) =>
+      dispatch({ type: 'STREAM_CHUNK', convId, chunk, msgId }),
 
     handleStreamDone: (convId: string) =>
       dispatch({ type: 'STREAM_DONE', convId }),
@@ -264,6 +319,15 @@ export function useChatStore() {
     deleteMessage: (convId: string, msgId: string) =>
       dispatch({ type: 'DELETE_MESSAGE', convId, msgId }),
 
+    undoDeleteMessage: (convId: string, message: Message) =>
+      dispatch({ type: 'UNDO_DELETE_MESSAGE', convId, message }),
+
+    markMessageFailed: (convId: string, msgId: string) =>
+      dispatch({ type: 'MARK_MESSAGE_FAILED', convId, msgId }),
+
+    clearMessageFailed: (convId: string, msgId: string) =>
+      dispatch({ type: 'CLEAR_MESSAGE_FAILED', convId, msgId }),
+
     syncAll: (conversations: Conversation[]) =>
       dispatch({ type: 'SYNC', conversations }),
 
@@ -273,28 +337,56 @@ export function useChatStore() {
       if (!contentTrimmed)
         return
 
-      let convId = state.activeId
-      let history: { role: 'user' | 'assistant', content: string }[] = []
+      const msgId = genId()
+      const userMsg = { role: 'user' as const, content: contentTrimmed }
 
+      // Step 1: Determine convId and create conversation if needed.
+      // The local convId variable is authoritative — we do NOT re-read state.activeId
+      // after dispatching because React batching makes it stale within the event handler.
+      let convId = state.activeId
       if (!convId) {
         convId = genId()
         dispatch({ type: 'CREATE_CONV', id: convId })
       }
-      else {
-        const conv = state.conversations.find(c => c.id === convId)
-        if (conv) {
-          history = conv.messages.map(m => ({ role: m.role, content: m.content }))
-        }
+
+      // Step 2: Build history using the stable convId from step 1.
+      // This is correct whether activeId was pre-existing (convId = state.activeId, non-empty)
+      // or we just created a new conversation (convId = the id we generated above).
+      const conv = state.conversations.find(c => c.id === convId)
+      const history = conv
+        ? [...conv.messages.map(m => ({ role: m.role, content: m.content })), userMsg]
+        : [userMsg]
+
+      dispatch({ type: 'ADD_MESSAGE', convId, role: 'user', content: contentTrimmed, msgId })
+      dispatch({ type: 'SET_PENDING', convId })
+
+      const sent = sendFn({ type: 'chat', convId, messages: history })
+      if (!sent) {
+        dispatch({ type: 'SET_PENDING', convId: null })
+        dispatch({ type: 'MARK_MESSAGE_FAILED', convId, msgId })
+        dispatch({ type: 'SET_ERROR', message: '发送失败，未连接到服务器' })
       }
+    },
 
-      history.push({ role: 'user', content: contentTrimmed })
+    retryMessage: (convId: string, msgId: string, sendFn: (msg: WsInMessage) => boolean) => {
+      const conv = state.conversations.find(c => c.id === convId)
+      if (!conv)
+        return
+      const msg = conv.messages.find(m => m.id === msgId)
+      if (!msg || msg.role !== 'user')
+        return
 
-      dispatch({ type: 'ADD_MESSAGE', convId, role: 'user', content: contentTrimmed })
+      // Build history BEFORE any dispatches so it's stable
+      const history = conv.messages
+        .filter(m => m.id !== msgId)
+        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+
+      dispatch({ type: 'CLEAR_MESSAGE_FAILED', convId, msgId })
       dispatch({ type: 'SET_PENDING', convId })
 
       if (!sendFn({ type: 'chat', convId, messages: history })) {
         dispatch({ type: 'SET_PENDING', convId: null })
-        dispatch({ type: 'SET_ERROR', message: '发送失败，未连接到服务器' })
+        dispatch({ type: 'MARK_MESSAGE_FAILED', convId, msgId })
       }
     },
   }

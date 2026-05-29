@@ -26,22 +26,17 @@ describe('messageBubble - clipboard', () => {
 
   it('codeBlock 复制切换按钮状态', async () => {
     render(<MessageBubble message={codeMsg} />)
-    const copyBtn = screen.getByText('复制')
+    const copyBtn = screen.getAllByText('复制')[0]
     expect(copyBtn).toBeInTheDocument()
     await act(async () => { fireEvent.click(copyBtn) })
     expect(screen.getByText('已复制')).toBeInTheDocument()
     act(() => { vi.advanceTimersByTime(2000) })
-    expect(screen.getByText('复制')).toBeInTheDocument()
+    expect(screen.getAllByText('复制').length).toBe(2)
   })
 
-  it('消息 Hover 显示复制按钮', () => {
-    const { container } = render(<MessageBubble message={aiMsg} />)
-    const bubble = container.querySelector('.items-center')
-    expect(bubble).toBeTruthy()
-    fireEvent.mouseEnter(bubble!)
+  it('消息底部始终显示复制按钮', () => {
+    render(<MessageBubble message={aiMsg} />)
     expect(screen.getByText('复制')).toBeInTheDocument()
-    fireEvent.mouseLeave(bubble!)
-    expect(screen.queryByText('复制')).not.toBeInTheDocument()
   })
 
   it('消息复制按钮切换状态', async () => {
@@ -77,10 +72,10 @@ describe('messageBubble - clipboard', () => {
     document.execCommand = vi.fn(() => true) as any
 
     render(<MessageBubble message={codeMsg} />)
-    await act(async () => { fireEvent.click(screen.getByText('复制')) })
+    await act(async () => { fireEvent.click(screen.getAllByText('复制')[0]) })
     expect(screen.getByText('已复制')).toBeInTheDocument()
     act(() => { vi.advanceTimersByTime(2000) })
-    expect(screen.getByText('复制')).toBeInTheDocument()
+    expect(screen.getAllByText('复制').length).toBe(2)
 
     Object.defineProperty(navigator, 'clipboard', { value: origClipboard, configurable: true })
     document.execCommand = origExecCommand
@@ -88,14 +83,10 @@ describe('messageBubble - clipboard', () => {
 })
 
 describe('messageBubble - edit/delete', () => {
-  it('用户消息 hover 显示编辑和删除按钮', () => {
-    const { container } = render(<MessageBubble message={userMsg} />)
-    const bubble = container.querySelector('.items-center')
-    fireEvent.mouseEnter(bubble!)
+  it('用户消息底部始终显示编辑和删除按钮', () => {
+    render(<MessageBubble message={userMsg} onEdit={vi.fn()} onDelete={vi.fn()} />)
     expect(screen.getByText('编辑')).toBeInTheDocument()
     expect(screen.getByText('删除')).toBeInTheDocument()
-    fireEvent.mouseLeave(bubble!)
-    expect(screen.queryByText('编辑')).not.toBeInTheDocument()
   })
 
   it('aI 消息 hover 不显示编辑和删除按钮', () => {

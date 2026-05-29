@@ -32,7 +32,7 @@ describe('useChatStore', () => {
     const { result } = renderHook(() => useChatStore())
     act(() => { result.current.createConv() })
     const convId = result.current.activeId
-    act(() => { result.current.addMessage(convId, 'user', '帮我写一段代码') })
+    act(() => { result.current.addMessage(convId, 'user', '帮我写一段代码', 'test-msg-id-1') })
     expect(result.current.activeConv!.messages).toHaveLength(1)
     expect(result.current.activeConv!.title).toBe('帮我写一段代码')
   })
@@ -41,9 +41,9 @@ describe('useChatStore', () => {
     const { result } = renderHook(() => useChatStore())
     act(() => { result.current.createConv() })
     const convId = result.current.activeId
-    act(() => { result.current.addMessage(convId, 'user', '第一条消息') })
-    act(() => { result.current.addMessage(convId, 'assistant', '回复') })
-    act(() => { result.current.addMessage(convId, 'user', '第二条消息') })
+    act(() => { result.current.addMessage(convId, 'user', '第一条消息', 'test-msg-id-1') })
+    act(() => { result.current.addMessage(convId, 'assistant', '回复', 'test-msg-id-2') })
+    act(() => { result.current.addMessage(convId, 'user', '第二条消息', 'test-msg-id-3') })
     expect(result.current.activeConv!.messages).toHaveLength(3)
     expect(result.current.activeConv!.title).toBe('第一条消息')
   })
@@ -61,7 +61,7 @@ describe('useChatStore', () => {
     const { result } = renderHook(() => useChatStore())
     act(() => { result.current.createConv() })
     const convId = result.current.activeId
-    act(() => { result.current.addMessage(convId, 'user', '测试') })
+    act(() => { result.current.addMessage(convId, 'user', '测试', 'test-msg-id') })
     act(() => { result.current.clearConv(convId) })
     expect(result.current.activeConv!.messages).toHaveLength(0)
     expect(result.current.conversations).toHaveLength(1)
@@ -71,8 +71,8 @@ describe('useChatStore', () => {
     const { result } = renderHook(() => useChatStore())
     act(() => { result.current.createConv() })
     const convId = result.current.activeId
-    act(() => { result.current.addMessage(convId, 'user', '你好') })
-    act(() => { result.current.handleStreamChunk(convId, '你好！') })
+    act(() => { result.current.addMessage(convId, 'user', '你好', 'test-msg-id-1') })
+    act(() => { result.current.handleStreamChunk(convId, '你好！', 'test-msg-id-2') })
     expect(result.current.activeConv!.messages).toHaveLength(2)
     expect(result.current.activeConv!.messages[1].role).toBe('assistant')
     expect(result.current.activeConv!.messages[1].content).toBe('你好！')
@@ -83,9 +83,9 @@ describe('useChatStore', () => {
     const { result } = renderHook(() => useChatStore())
     act(() => { result.current.createConv() })
     const convId = result.current.activeId
-    act(() => { result.current.addMessage(convId, 'user', '你好') })
-    act(() => { result.current.handleStreamChunk(convId, '第一') })
-    act(() => { result.current.handleStreamChunk(convId, '第二') })
+    act(() => { result.current.addMessage(convId, 'user', '你好', 'test-msg-id-1') })
+    act(() => { result.current.handleStreamChunk(convId, '第一', 'test-msg-id-2') })
+    act(() => { result.current.handleStreamChunk(convId, '第二', 'test-msg-id-2') })
     expect(result.current.activeConv!.messages).toHaveLength(2)
     expect(result.current.activeConv!.messages[1].content).toBe('第一第二')
     expect(result.current.isStreaming).toBe(true)
@@ -95,7 +95,7 @@ describe('useChatStore', () => {
     const { result } = renderHook(() => useChatStore())
     act(() => { result.current.createConv() })
     const convId = result.current.activeId
-    act(() => { result.current.handleStreamChunk(convId, '内容') })
+    act(() => { result.current.handleStreamChunk(convId, '内容', 'test-msg-id') })
     expect(result.current.isStreaming).toBe(true)
     act(() => { result.current.handleStreamDone(convId) })
     expect(result.current.isStreaming).toBe(false)
@@ -129,7 +129,7 @@ describe('useChatStore', () => {
     const { result, unmount } = renderHook(() => useChatStore())
     act(() => { result.current.createConv() })
     const convId = result.current.activeId
-    act(() => { result.current.addMessage(convId, 'user', '持久化测试') })
+    act(() => { result.current.addMessage(convId, 'user', '持久化测试', 'test-msg-id') })
     unmount()
 
     const { result: result2 } = renderHook(() => useChatStore())
@@ -181,7 +181,7 @@ describe('useChatStore', () => {
     const { result } = renderHook(() => useChatStore())
     act(() => { result.current.createConv() })
     const convId = result.current.activeId
-    act(() => { result.current.addMessage(convId, 'user', '历史消息') })
+    act(() => { result.current.addMessage(convId, 'user', '历史消息', 'test-msg-id-1') })
     act(() => { result.current.sendMessage('新消息', sendFn) })
     expect(result.current.conversations).toHaveLength(1)
     expect(result.current.activeConv!.messages).toHaveLength(2)
@@ -195,8 +195,8 @@ describe('useChatStore', () => {
     const { result } = renderHook(() => useChatStore())
     act(() => { result.current.createConv() })
     const convId = result.current.activeId
-    act(() => { result.current.addMessage(convId, 'user', '上一条') })
-    act(() => { result.current.addMessage(convId, 'assistant', '回复') })
+    act(() => { result.current.addMessage(convId, 'user', '上一条', 'test-msg-id-1') })
+    act(() => { result.current.addMessage(convId, 'assistant', '回复', 'test-msg-id-2') })
     act(() => { result.current.sendMessage('再来一条', sendFn) })
     const callArg = (sendFn as unknown as { mock: { calls: Array<[WsInMessage]> } }).mock.calls[0]![0]
     expect(callArg?.messages).toHaveLength(3)
@@ -207,7 +207,7 @@ describe('useChatStore', () => {
     const { result } = renderHook(() => useChatStore())
     act(() => { result.current.createConv() })
     const convId = result.current.activeId
-    act(() => { result.current.handleStreamChunk(convId, '首个块') })
+    act(() => { result.current.handleStreamChunk(convId, '首个块', 'test-msg-id') })
     expect(result.current.activeConv!.messages).toHaveLength(1)
     expect(result.current.activeConv!.messages[0].role).toBe('assistant')
     expect(result.current.isStreaming).toBe(true)
@@ -217,7 +217,7 @@ describe('useChatStore', () => {
     const { result } = renderHook(() => useChatStore())
     act(() => { result.current.createConv() })
     const convId = result.current.activeId
-    act(() => { result.current.addMessage(convId, 'user', '本地消息') })
+    act(() => { result.current.addMessage(convId, 'user', '本地消息', 'test-msg-id') })
 
     const remoteConv = {
       id: convId,
@@ -272,7 +272,7 @@ describe('useChatStore', () => {
     act(() => { result.current.createConv() })
     expect(result.current.canCreate).toBe(false)
     const convId = result.current.activeId
-    act(() => { result.current.addMessage(convId, 'user', '消息') })
+    act(() => { result.current.addMessage(convId, 'user', '消息', 'test-msg-id') })
     expect(result.current.canCreate).toBe(true)
   })
 
@@ -292,5 +292,89 @@ describe('useChatStore', () => {
     const { result } = renderHook(() => useChatStore())
     expect(result.current.conversations).toEqual([])
     expect(result.current.activeId).toBe('')
+  })
+
+  it('setTitle 修改会话标题', () => {
+    const { result } = renderHook(() => useChatStore())
+    act(() => { result.current.createConv() })
+    const convId = result.current.activeId
+    act(() => { result.current.addMessage(convId, 'user', '原始标题', 'test-msg-id') })
+    act(() => { result.current.setTitle(convId, '新标题') })
+    expect(result.current.activeConv!.title).toBe('新标题')
+  })
+
+  it('editMessage 修改消息内容', () => {
+    const { result } = renderHook(() => useChatStore())
+    act(() => { result.current.createConv() })
+    const convId = result.current.activeId
+    act(() => { result.current.addMessage(convId, 'user', '原始内容', 'test-msg-id') })
+    act(() => { result.current.editMessage(convId, 'test-msg-id', '修改后的内容') })
+    expect(result.current.activeConv!.messages[0].content).toBe('修改后的内容')
+  })
+
+  it('deleteMessage 删除消息', () => {
+    const { result } = renderHook(() => useChatStore())
+    act(() => { result.current.createConv() })
+    const convId = result.current.activeId
+    act(() => { result.current.addMessage(convId, 'user', '要删除的消息', 'test-msg-id') })
+    expect(result.current.activeConv!.messages).toHaveLength(1)
+    act(() => { result.current.deleteMessage(convId, 'test-msg-id') })
+    expect(result.current.activeConv!.messages).toHaveLength(0)
+  })
+
+  it('undoDeleteMessage 恢复已删除的消息', () => {
+    const { result } = renderHook(() => useChatStore())
+    act(() => { result.current.createConv() })
+    const convId = result.current.activeId
+    act(() => { result.current.addMessage(convId, 'user', '消息', 'test-msg-id') })
+    act(() => { result.current.deleteMessage(convId, 'test-msg-id') })
+    expect(result.current.activeConv!.messages).toHaveLength(0)
+    const deletedMsg = { id: 'test-msg-id', role: 'user' as const, content: '消息', timestamp: 1000 }
+    act(() => { result.current.undoDeleteMessage(convId, deletedMsg) })
+    expect(result.current.activeConv!.messages).toHaveLength(1)
+    expect(result.current.activeConv!.messages[0].content).toBe('消息')
+  })
+
+  it('markMessageFailed 标记消息失败', () => {
+    const { result } = renderHook(() => useChatStore())
+    act(() => { result.current.createConv() })
+    const convId = result.current.activeId
+    act(() => { result.current.addMessage(convId, 'user', '消息', 'test-msg-id') })
+    expect(result.current.activeConv!.messages[0].failed).toBeUndefined()
+    act(() => { result.current.markMessageFailed(convId, 'test-msg-id') })
+    expect(result.current.activeConv!.messages[0].failed).toBe(true)
+  })
+
+  it('clearMessageFailed 清除消息失败状态', () => {
+    const { result } = renderHook(() => useChatStore())
+    act(() => { result.current.createConv() })
+    const convId = result.current.activeId
+    act(() => { result.current.addMessage(convId, 'user', '消息', 'test-msg-id') })
+    act(() => { result.current.markMessageFailed(convId, 'test-msg-id') })
+    expect(result.current.activeConv!.messages[0].failed).toBe(true)
+    act(() => { result.current.clearMessageFailed(convId, 'test-msg-id') })
+    expect(result.current.activeConv!.messages[0].failed).toBe(false)
+  })
+
+  it('retryMessage 重试发送失败的消息', () => {
+    const sendFn = vi.fn(() => true)
+    const { result } = renderHook(() => useChatStore())
+    act(() => { result.current.createConv() })
+    const convId = result.current.activeId
+    act(() => { result.current.addMessage(convId, 'user', '失败的消息', 'test-msg-id') })
+    act(() => { result.current.markMessageFailed(convId, 'test-msg-id') })
+    act(() => { result.current.retryMessage(convId, 'test-msg-id', sendFn) })
+    expect(result.current.isPending).toBe(true)
+    expect(sendFn).toHaveBeenCalled()
+  })
+
+  it('retryMessage 无效消息不重试', () => {
+    const sendFn = vi.fn(() => true)
+    const { result } = renderHook(() => useChatStore())
+    act(() => { result.current.createConv() })
+    const convId = result.current.activeId
+    // retry with non-existent message
+    act(() => { result.current.retryMessage(convId, 'non-existent-id', sendFn) })
+    expect(sendFn).not.toHaveBeenCalled()
   })
 })

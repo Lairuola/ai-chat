@@ -1,5 +1,5 @@
 import type { Conversation } from '../types'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { dateGroupLabel } from '../utils/time'
 import { MessageBubble } from './MessageBubble'
 
@@ -94,11 +94,12 @@ interface Props {
   onDismissError: () => void
   onEdit?: (msgId: string, content: string) => void
   onDelete?: (msgId: string) => void
+  onRetry?: (msgId: string) => void
 }
 
 /* ─── Component ─── */
 
-export function MessageList({ conversation, isStreaming, isPending, error, onDismissError, onEdit, onDelete }: Props) {
+export const MessageList = memo(function MessageList({ conversation, isStreaming, isPending, error, onDismissError, onEdit, onDelete, onRetry }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
@@ -164,10 +165,10 @@ export function MessageList({ conversation, isStreaming, isPending, error, onDis
       <div key={msg.id} className="mb-4">
         {msg.role === 'assistant' && isStreaming && i === messages.length - 1
           ? (
-              <MessageBubble message={msg} isStreaming onEdit={onEdit} onDelete={onDelete} />
+              <MessageBubble message={msg} isStreaming onEdit={onEdit} onDelete={onDelete} onRetry={onRetry} />
             )
           : (
-              <MessageBubble message={msg} onEdit={onEdit} onDelete={onDelete} />
+              <MessageBubble message={msg} onEdit={onEdit} onDelete={onDelete} onRetry={onRetry} />
             )}
       </div>,
     )
@@ -212,4 +213,4 @@ export function MessageList({ conversation, isStreaming, isPending, error, onDis
       )}
     </div>
   )
-}
+})

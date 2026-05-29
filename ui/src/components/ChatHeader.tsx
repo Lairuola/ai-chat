@@ -4,6 +4,7 @@ interface Props {
   conversation?: Conversation | null
   hasMessages?: boolean
   isStreaming?: boolean
+  isConnected?: boolean
   onClear?: () => void
   onOpenSidebar?: () => void
 }
@@ -24,7 +25,7 @@ function exportMarkdown(conv: Conversation) {
   URL.revokeObjectURL(url)
 }
 
-export function ChatHeader({ conversation, hasMessages, isStreaming, onClear, onOpenSidebar }: Props) {
+export function ChatHeader({ conversation, hasMessages, isStreaming, isConnected, onClear, onOpenSidebar }: Props) {
   return (
     <div
       className="shrink-0 flex items-center select-none px-6"
@@ -40,7 +41,7 @@ export function ChatHeader({ conversation, hasMessages, isStreaming, onClear, on
       <button
         onClick={onOpenSidebar}
         aria-label="打开侧边栏"
-        className="w-8 h-8 rounded-lg flex items-center justify-center mr-4 transition-all hover:bg-[var(--surface-hover)] active:scale-90"
+        className="w-10 h-10 rounded-lg flex items-center justify-center mr-4 transition-all hover:bg-[var(--surface-hover)] active:scale-90 lg:hidden"
         style={{ color: 'var(--text-muted)' }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -50,20 +51,36 @@ export function ChatHeader({ conversation, hasMessages, isStreaming, onClear, on
         </svg>
       </button>
 
-      {/* Model name */}
-      <span
-        className="font-semibold tracking-wide"
-        style={{ color: 'var(--text-secondary)', fontSize: 15 }}
+      {/* Brand badge */}
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+        style={{
+          background: 'var(--primary-soft)',
+          border: '1px solid color-mix(in srgb, var(--primary) 15%, transparent)',
+        }}
       >
-        DeepSeek
-      </span>
+        <svg width="16" height="16" viewBox="0 0 32 32" style={{ flexShrink: 0 }}>
+          <rect rx="6" width="32" height="32" fill="var(--primary)" />
+          <path d="M8 11a2 2 0 012-2h12a2 2 0 012 2v6a2 2 0 01-2 2h-8l-4 3v-3h-2a2 2 0 01-2-2z" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round" />
+          <circle cx="12" cy="14" r="1.2" fill="#fff" />
+          <circle cx="16" cy="14" r="1.2" fill="#fff" />
+          <circle cx="20" cy="14" r="1.2" fill="#fff" />
+        </svg>
+        <span className="text-xs font-semibold tracking-wide" style={{ color: 'var(--primary)' }}>
+          DeepSeek
+        </span>
+        <span
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ background: isConnected ? 'var(--primary)' : 'var(--danger)' }}
+        />
+      </div>
 
       <div className="flex-1" />
 
       {hasMessages && conversation && (
         <button
           onClick={() => exportMarkdown(conversation)}
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:bg-[var(--surface-hover)] active:scale-90"
+          className="flex items-center gap-1.5 h-10 px-2.5 rounded-lg transition-all duration-200 hover:bg-[var(--surface-hover)] active:scale-90"
           style={{ color: 'var(--text-muted)' }}
           aria-label="导出对话"
           title="导出为 Markdown"
@@ -73,6 +90,7 @@ export function ChatHeader({ conversation, hasMessages, isStreaming, onClear, on
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
+          <span className="text-[11px] font-medium hidden sm:inline">导出</span>
         </button>
       )}
 
@@ -80,7 +98,7 @@ export function ChatHeader({ conversation, hasMessages, isStreaming, onClear, on
         <button
           onClick={() => onClear?.()}
           disabled={isStreaming}
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:bg-[var(--surface-hover)] active:scale-90 disabled:opacity-25 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:active:scale-100"
+          className="flex items-center gap-1.5 h-10 px-2.5 rounded-lg transition-all duration-200 hover:bg-[var(--surface-hover)] active:scale-90 disabled:opacity-25 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:active:scale-100"
           style={{ color: 'var(--text-muted)' }}
           aria-label="清空当前对话"
           title={isStreaming ? 'AI 输出中，无法清空' : '清空当前对话'}
@@ -92,6 +110,7 @@ export function ChatHeader({ conversation, hasMessages, isStreaming, onClear, on
             <line x1="10" y1="11" x2="10" y2="17" />
             <line x1="14" y1="11" x2="14" y2="17" />
           </svg>
+          <span className="text-[11px] font-medium hidden sm:inline">清空</span>
         </button>
       )}
     </div>

@@ -1,5 +1,5 @@
 import type { Message } from '../types'
-import { useCallback, useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 
@@ -26,7 +26,7 @@ function copyToClipboard(text: string): Promise<void> {
   })
 }
 
-function CodeBlock({ className, children }: { className?: string, children: React.ReactNode }) {
+const CodeBlock = memo(function CodeBlock({ className, children }: { className?: string, children: React.ReactNode }) {
   const [copied, setCopied] = useState(false)
   const lang = className?.replace('language-', '') || ''
 
@@ -58,23 +58,24 @@ function CodeBlock({ className, children }: { className?: string, children: Reac
         style={{
           background: 'var(--code-bg)',
           color: 'var(--code-text)',
-          fontFamily: '\'JetBrains Mono\', \'Fira Code\', monospace',
+          fontFamily: 'var(--font-mono)',
         }}
       >
         {children}
       </pre>
     </div>
   )
-}
+})
 
 interface Props {
   message: Message
   isStreaming?: boolean
   onEdit?: (msgId: string, content: string) => void
   onDelete?: (msgId: string) => void
+  onRetry?: (msgId: string) => void
 }
 
-export function MessageBubble({ message, isStreaming, onEdit, onDelete }: Props) {
+export const MessageBubble = memo(function MessageBubble({ message, isStreaming, onEdit, onDelete, onRetry }: Props) {
   const isUser = message.role === 'user'
   const [showActions, setShowActions] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -99,9 +100,7 @@ export function MessageBubble({ message, isStreaming, onEdit, onDelete }: Props)
 
   return (
     <div
-      className={`flex gap-3 items-center msg-enter ${isUser ? 'flex-row-reverse' : ''}`}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
+      className={`flex gap-3 items-start msg-enter ${isUser ? 'flex-row-reverse' : ''}`}
     >
       {/* Avatar */}
       <div
@@ -113,19 +112,22 @@ export function MessageBubble({ message, isStreaming, onEdit, onDelete }: Props)
         {isUser ? '我' : 'AI'}
       </div>
 
-      {/* Bubble + timestamp wrapper */}
-      <div className="flex flex-col gap-1">
+      {/* Bubble + actions wrapper */}
+      <div className="flex flex-col gap-1 min-w-0 max-w-[min(85%,42rem)]">
         {/* Timestamp — above bubble */}
-        <div className={`text-[10px] leading-none select-none ${isUser ? 'text-right' : 'text-left'}`} style={{ color: 'var(--text-muted)' }}>
-          {timeStr}
+        <div className={`text-[10px] leading-none select-none flex items-center gap-2 ${isUser ? 'justify-end' : 'text-left'}`} style={{ color: 'var(--text-muted)' }}>
+          <span>{timeStr}</span>
+          {message.failed && (
+            <span className="text-[10px] font-medium" style={{ color: 'var(--danger)' }}>
+              发送失败
+            </span>
+          )}
         </div>
         <div
           className={`relative px-4 py-3 text-[15px] leading-relaxed ${
             isUser ? 'rounded-xl rounded-tr-sm' : 'rounded-xl rounded-tl-sm'
           }`}
           style={{
-            width: 'fit-content',
-            maxWidth: 'min(85%, 42rem)',
             overflowWrap: 'break-word',
             wordBreak: 'break-word',
             background: isUser
@@ -135,133 +137,126 @@ export function MessageBubble({ message, isStreaming, onEdit, onDelete }: Props)
             color: isUser ? 'var(--user-bubble-color)' : 'var(--text)',
           }}
         >
-          {isUser
-            ? editing
-              ? (
-                  <div className="flex flex-col gap-2">
-                    <textarea
-                      value={editValue}
-                      onChange={e => setEditValue(e.target.value)}
-                      className="w-full rounded-lg p-2 text-sm outline-none resize-none"
-                      style={{
-                        background: 'var(--surface-hover)',
-                        color: 'var(--text)',
-                        border: '1px solid var(--border)',
-                        minHeight: 60,
-                      }}
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit() }
-                        if (e.key === 'Escape') { setEditValue(message.content); setEditing(false) }
-                      }}
-                    />
-                    <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => { setEditValue(message.content); setEditing(false) }}
-                        className="px-3 py-1 rounded-lg text-xs font-medium"
-                        style={{ background: 'var(--surface-hover)', color: 'var(--text-secondary)' }}
+          {isUser ? editing ? (
+            <div className="flex flex-col gap-2">
+              <textarea
+                value={editValue}
+                onChange={e => setEditValue(e.target.value)}
+                className="w-full rounded-lg p-2 text-sm outline-none resize-none"
+                style={{
+                  background: 'var(--surface-hover)',
+                  color: 'var(--text)',
+                  border: '1px solid var(--border)',
+                  minHeight: 60,
+                }}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit() }
+                  if (e.key === 'Escape') { setEditValue(message.content); setEditing(false) }
+                }}
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => { setEditValue(message.content); setEditing(false) }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                  style={{ background: 'var(--surface-hover)', color: 'var(--text-secondary)' }}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+                  style={{ background: 'var(--btn-bg)' }}
+                >
+                  保存
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
+          ) : (
+            <div className="max-w-none">
+              <ReactMarkdown
+                rehypePlugins={[rehypeHighlight]}
+                components={{
+                  pre({ children }) { return <CodeBlock>{children}</CodeBlock> },
+                  code({ className, children, ...props }) {
+                    if (className)
+                      return <code className={className} {...props}>{children}</code>
+                    return (
+                      <code
+                        className="px-2 py-1 rounded-md text-[13px] font-medium"
+                        style={{
+                          background: 'var(--primary-soft)',
+                          color: 'var(--primary)',
+                          fontFamily: 'var(--font-mono)',
+                        }}
+                        {...props}
                       >
-                        取消
-                      </button>
-                      <button
-                        onClick={handleSaveEdit}
-                        className="px-3 py-1 rounded-lg text-xs font-medium text-white"
-                        style={{ background: 'var(--btn-bg)' }}
-                      >
-                        保存
-                      </button>
-                    </div>
-                  </div>
-                )
-              : (
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
-                )
-            : (
-                <div className="max-w-none">
-                  <ReactMarkdown
-                    rehypePlugins={[rehypeHighlight]}
-                    components={{
-                      pre({ children }) {
-                        return <CodeBlock>{children}</CodeBlock>
-                      },
-                      code({ className, children, ...props }) {
-                        if (className)
-                          return <code className={className} {...props}>{children}</code>
-                        return (
-                          <code
-                            className="px-2 py-1 rounded-md text-[13px] font-medium"
-                            style={{
-                              background: 'var(--primary-soft)',
-                              color: 'var(--primary)',
-                              fontFamily: '\'JetBrains Mono\', \'Fira Code\', monospace',
-                            }}
-                            {...props}
-                          >
-                            {children}
-                          </code>
-                        )
-                      },
-                      p({ children }) { return <p className="mb-2 last:mb-0">{children}</p> },
-                      ul({ children }) { return <ul className="list-disc pl-5 mb-2 space-y-1">{children}</ul> },
-                      ol({ children }) { return <ol className="list-decimal pl-5 mb-2 space-y-1">{children}</ol> },
-                      blockquote({ children }) {
-                        return <blockquote className="border-l-2 pl-3 my-2 italic" style={{ borderColor: 'var(--primary)', color: 'var(--text-secondary)' }}>{children}</blockquote>
-                      },
-                      a({ href, children }) {
-                        return <a href={href} className="underline underline-offset-2" style={{ color: 'var(--primary)' }} target="_blank" rel="noopener noreferrer">{children}</a>
-                      },
-                    }}
-                  >
-                    {message.content}
-                  </ReactMarkdown>
-                  {isStreaming && (
-                    <span
-                      className="inline-block w-1.5 h-4 ml-1 align-middle rounded-full animate-pulse"
-                      style={{ background: 'var(--primary)', boxShadow: '0 0 8px var(--primary-glow)' }}
-                    />
-                  )}
-                </div>
+                        {children}
+                      </code>
+                    )
+                  },
+                  p({ children }) { return <p className="mb-2 last:mb-0">{children}</p> },
+                  ul({ children }) { return <ul className="list-disc pl-5 mb-2 space-y-1">{children}</ul> },
+                  ol({ children }) { return <ol className="list-decimal pl-5 mb-2 space-y-1">{children}</ol> },
+                  blockquote({ children }) {
+                    return <blockquote className="border-l-2 pl-3 my-2 italic" style={{ borderColor: 'var(--primary)', color: 'var(--text-secondary)' }}>{children}</blockquote>
+                  },
+                  a({ href, children }) {
+                    return <a href={href} className="underline underline-offset-2" style={{ color: 'var(--primary)' }} target="_blank" rel="noopener noreferrer">{children}</a>
+                  },
+                }}
+              >
+                {message.content}
+              </ReactMarkdown>
+              {isStreaming && (
+                <span
+                  className="inline-block w-1.5 h-4 ml-1 align-middle rounded-full animate-pulse"
+                  style={{ background: 'var(--primary)', boxShadow: '0 0 8px var(--primary-glow)' }}
+                />
               )}
+            </div>
+          )}
 
-          {/* Hover actions */}
-          {showActions && !isStreaming && (
-            <div className={`absolute top-0 -translate-y-1/2 flex gap-1 ${isUser ? 'right-1' : 'left-1'}`}>
-              {isUser && (
-                <>
-                  <button
-                    onClick={() => { setEditValue(message.content); setEditing(true) }}
-                    className="px-2 py-1 rounded-md text-[11px] font-medium transition-all"
-                    style={{
-                      background: 'var(--copy-btn-bg)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text-muted)',
-                    }}
-                    title="编辑"
-                  >
-                    编辑
-                  </button>
-                  <button
-                    onClick={() => onDelete?.(message.id)}
-                    className="px-2 py-1 rounded-md text-[11px] font-medium transition-all"
-                    style={{
-                      background: 'var(--copy-btn-bg)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--danger)',
-                    }}
-                    title="删除"
-                  >
-                    删除
-                  </button>
-                </>
+          {/* Action buttons — always visible */}
+          {!isStreaming && (
+            <div className={`flex gap-1 mt-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
+              {isUser && message.failed ? (
+                <button
+                  onClick={() => onRetry?.(message.id)}
+                  className="px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all hover:opacity-80 active:scale-95"
+                  style={{ background: 'var(--copy-btn-bg)', border: '1px solid var(--border)', color: 'var(--primary)' }}
+                  title="重新发送"
+                >
+                  重新发送
+                </button>
+              ) : (
+                isUser && (
+                  <>
+                    <button
+                      onClick={() => { setEditValue(message.content); setEditing(true) }}
+                      className="px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all hover:opacity-80 active:scale-95"
+                      style={{ background: 'var(--copy-btn-bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+                      title="编辑"
+                    >
+                      编辑
+                    </button>
+                    <button
+                      onClick={() => onDelete?.(message.id)}
+                      className="px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all hover:opacity-80 active:scale-95"
+                      style={{ background: 'var(--copy-btn-bg)', border: '1px solid var(--border)', color: 'var(--danger)' }}
+                      title="删除"
+                    >
+                      删除
+                    </button>
+                  </>
+                )
               )}
               <button
                 onClick={handleCopyMessage}
-                className="px-2 py-1 rounded-md text-[11px] font-medium transition-all"
-                style={{
-                  background: 'var(--copy-btn-bg)',
-                  border: '1px solid var(--border)',
-                  color: copied ? 'var(--primary)' : 'var(--text-muted)',
-                }}
+                className="px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all hover:opacity-80 active:scale-95"
+                style={{ background: 'var(--copy-btn-bg)', border: '1px solid var(--border)', color: copied ? 'var(--primary)' : 'var(--text-muted)' }}
               >
                 {copied ? '已复制' : '复制'}
               </button>
@@ -271,4 +266,4 @@ export function MessageBubble({ message, isStreaming, onEdit, onDelete }: Props)
       </div>
     </div>
   )
-}
+})

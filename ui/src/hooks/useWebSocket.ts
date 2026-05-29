@@ -1,6 +1,11 @@
 import type { WsInMessage, WsOutMessage } from '../types'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+/**
+ * WebSocket hook with exponential backoff reconnection.
+ * Retry schedule: 1s → 2s → 4s (max 3 attempts).
+ * After exhaustion, user must manually reconnect via reconnect().
+ */
 export function useWebSocket(onMessage?: (msg: WsOutMessage) => void) {
   const wsRef = useRef<WebSocket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
@@ -54,7 +59,9 @@ export function useWebSocket(onMessage?: (msg: WsOutMessage) => void) {
       catch { /* ignore malformed */ }
     }
 
-    ws.onerror = () => { /* onclose fires after this */ }
+    ws.onerror = (e) => {
+      console.error('[WebSocket] connection error', e)
+    }
   }, [])
 
   useEffect(() => {

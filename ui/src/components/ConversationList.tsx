@@ -1,6 +1,7 @@
 import type { Conversation } from '../types'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { dateGroupLabel, formatRelativeTime } from '../utils/time'
+import { ConfirmDialog } from './ConfirmDialog'
 
 interface Props {
   conversations: Conversation[]
@@ -30,6 +31,7 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
     catch { return false }
   })
   const [search, setSearch] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const sidebarRef = useRef<HTMLDivElement>(null)
 
   /* Focus trap for mobile sidebar */
@@ -80,6 +82,33 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
   }
   const groupOrder = ['今天', '昨天', '近7天', '近30天', '更早']
 
+  /* ── Arrow key navigation ── */
+  const handleListKeyDown = (e: React.KeyboardEvent) => {
+    const items = Array.from(
+      (e.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('[data-conv-id]'),
+    )
+    if (items.length === 0)
+      return
+
+    const currentIdx = items.findIndex(el => el === document.activeElement)
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      const next = currentIdx < items.length - 1 ? currentIdx + 1 : 0
+      items[next]?.focus()
+    }
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      const prev = currentIdx > 0 ? currentIdx - 1 : items.length - 1
+      items[prev]?.focus()
+    }
+    else if (e.key === 'Delete' && currentIdx >= 0) {
+      const id = items[currentIdx]?.getAttribute('data-conv-id')
+      if (id)
+        setConfirmDeleteId(id)
+    }
+  }
+
   const sidebar = (
     <div
       className="flex flex-col h-full w-[260px] xl:w-[300px] 2xl:w-[360px]"
@@ -98,7 +127,7 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
           <button
             onClick={onCloseSidebar}
             aria-label="关闭侧边栏"
-            className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-[var(--surface-hover)] active:scale-90"
+            className="lg:hidden w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:bg-[var(--surface-hover)] active:scale-90"
             style={{ color: 'var(--text-muted)' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -107,7 +136,7 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
             </svg>
           </button>
           <svg width="22" height="22" viewBox="0 0 32 32" style={{ flexShrink: 0 }}>
-            <rect rx="6" width="32" height="32" fill="#0070F3" />
+            <rect rx="6" width="32" height="32" fill="var(--primary)" />
             <path d="M8 11a2 2 0 012-2h12a2 2 0 012 2v6a2 2 0 01-2 2h-8l-4 3v-3h-2a2 2 0 01-2-2z" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round" />
             <circle cx="12" cy="14" r="1.2" fill="#fff" />
             <circle cx="16" cy="14" r="1.2" fill="#fff" />
@@ -187,7 +216,7 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto px-2 pb-3">
+      <div className="flex-1 overflow-y-auto px-2 pb-3" onKeyDown={handleListKeyDown}>
         {q && filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>未找到匹配的会话</p>
@@ -223,11 +252,12 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
                   return (
                     <div
                       key={c.id}
+                      data-conv-id={c.id}
                       onClick={() => { onSelect(c.id); setSearch('') }}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(c.id); setSearch('') } }}
                       role="button"
                       tabIndex={0}
-                      className="group relative w-full text-left px-3 py-2.5 my-1 cursor-pointer rounded-xl transition-all duration-150"
+                      className="group relative w-full text-left px-3 py-2.5 my-1 cursor-pointer rounded-xl transition-all duration-150 flex items-center gap-1"
                       style={{
                         background: active
                           ? 'var(--sidebar-active)'
@@ -247,23 +277,21 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
                         />
                       )}
 
-                      {/* Delete button (left side, always occupies space) */}
+                      {/* Delete button */}
                       <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(c.id) }}
-                        className={`absolute left-1.5 inset-y-0 my-auto w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/10 ${
-                          active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:bg-white/10'
-                        }`}
-                        aria-label="删除会话"
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(c.id) }}
+                        className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:bg-[var(--surface-hover)] active:scale-90"
                         style={{ color: 'var(--text-muted)' }}
+                        aria-label="删除会话"
                         title="删除会话"
                       >
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                           <line x1="6" y1="6" x2="18" y2="18" />
                           <line x1="18" y1="6" x2="6" y2="18" />
                         </svg>
                       </button>
 
-                      <div className="pl-7">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <div className="font-medium text-sm truncate" style={{ color: 'var(--text)' }}>
                             {c.title}
@@ -275,10 +303,10 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
                           )}
                         </div>
                         <div
-                          className="text-xs mt-1 truncate pr-1"
+                          className="text-xs mt-1 line-clamp-2 leading-relaxed"
                           style={{ color: active ? 'var(--text-secondary)' : 'var(--text-muted)' }}
                         >
-                          {lastMsg ? lastMsg.content.slice(0, 50) : '暂无消息'}
+                          {lastMsg ? lastMsg.content.slice(0, 120) : '暂无消息'}
                         </div>
                       </div>
                     </div>
@@ -298,7 +326,7 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
           style={{
-            background: '#0070F3',
+            background: 'var(--primary)',
           }}
         >
           不
@@ -316,7 +344,7 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
             try { localStorage.setItem('chat-theme', now ? 'light' : 'dark') }
             catch {}
           }}
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110 active:scale-90"
+          className="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110 active:scale-90"
           style={{ color: 'var(--text-muted)' }}
           aria-label={isLight ? '切换到夜间模式' : '切换到日间模式'}
           title={isLight ? '切换到夜间' : '切换到日间'}
@@ -342,6 +370,15 @@ export function ConversationList({ conversations, activeId, canCreate, isConnect
               )}
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        title="删除会话"
+        message="确定删除此会话？此操作不可撤销。"
+        confirmLabel="删除"
+        onConfirm={() => { if (confirmDeleteId) { onDelete(confirmDeleteId); setConfirmDeleteId(null) } }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   )
 

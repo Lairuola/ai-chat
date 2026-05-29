@@ -15,14 +15,6 @@ export function ChatInput({ onSend, disabled }: Props) {
       ref.current?.focus()
   }, [disabled])
 
-  useEffect(() => {
-    const el = ref.current
-    if (!el)
-      return
-    el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
-  }, [value])
-
   const send = () => {
     const trimmed = value.trim()
     if (!trimmed || disabled)
@@ -70,6 +62,7 @@ export function ChatInput({ onSend, disabled }: Props) {
             color: 'var(--text)',
             outline: 'none',
             maxHeight: '120px',
+            fieldSizing: 'content',
           }}
           placeholder="输入消息... (Enter 发送)"
         />
