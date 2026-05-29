@@ -75,8 +75,11 @@ export function useWebSocket(onMessage?: (msg: WsOutMessage) => void) {
   }, [connect])
 
   const reconnect = useCallback(() => {
+    if (stoppedRef.current)
+      return
     clearTimeout(timerRef.current)
     wsRef.current?.close()
+    wsRef.current = null
     retriesRef.current = 0
     setRetriesExhausted(false)
     connect()

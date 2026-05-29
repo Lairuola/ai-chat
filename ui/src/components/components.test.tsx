@@ -197,7 +197,7 @@ describe('messageBubble', () => {
     render(<MessageBubble message={linkMsg} />)
     const link = document.querySelector('a')
     expect(link).toBeTruthy()
-    expect(link!.getAttribute('href')).toBe('https://example.com')
+    expect(link!.getAttribute('href')).toMatch(/^https:\/\/example\.com\/?$/)
     expect(link!.getAttribute('target')).toBe('_blank')
   })
 

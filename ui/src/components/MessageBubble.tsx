@@ -1,7 +1,19 @@
 import type { Message } from '../types'
+import type { ReactNode } from 'react'
 import { memo, useCallback, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
+import remarkGfm from 'remark-gfm'
+import rehypeSanitize from 'rehype-sanitize'
+
+function extractText(node: ReactNode): string {
+  if (typeof node === 'string') return node
+  if (Array.isArray(node)) return node.map(extractText).join('')
+  if (node && typeof node === 'object' && 'props' in (node as any)) {
+    return extractText((node as any).props.children)
+  }
+  return ''
+}
 
 function copyToClipboard(text: string): Promise<void> {
   if (navigator.clipboard?.writeText)
@@ -26,17 +38,16 @@ function copyToClipboard(text: string): Promise<void> {
   })
 }
 
-const CodeBlock = memo(function CodeBlock({ className, children }: { className?: string, children: React.ReactNode }) {
+const CodeBlock = memo(function CodeBlock({ className, code }: { className?: string, code: string }) {
   const [copied, setCopied] = useState(false)
   const lang = className?.replace('language-', '') || ''
 
   const handleCopy = useCallback(() => {
-    const text = typeof children === 'string' ? children : (children as any)?.props?.children || ''
-    copyToClipboard(String(text)).then(() => {
+    copyToClipboard(code).then(() => {
       setCopied(true)
       setTimeout(setCopied, 2000, false)
     })
-  }, [children])
+  }, [code])
 
   return (
     <div className="relative group/code my-3">
@@ -61,7 +72,7 @@ const CodeBlock = memo(function CodeBlock({ className, children }: { className?:
           fontFamily: 'var(--font-mono)',
         }}
       >
-        {children}
+        {code}
       </pre>
     </div>
   )
@@ -177,9 +188,13 @@ export const MessageBubble = memo(function MessageBubble({ message, isStreaming,
           ) : (
             <div className="max-w-none">
               <ReactMarkdown
-                rehypePlugins={[rehypeHighlight]}
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeSanitize, rehypeHighlight]}
                 components={{
-                  pre({ children }) { return <CodeBlock>{children}</CodeBlock> },
+                  pre({ children, ...props }) {
+                    const text = extractText(children)
+                    return <CodeBlock code={text} />
+                  },
                   code({ className, children, ...props }) {
                     if (className)
                       return <code className={className} {...props}>{children}</code>
@@ -204,7 +219,11 @@ export const MessageBubble = memo(function MessageBubble({ message, isStreaming,
                     return <blockquote className="border-l-2 pl-3 my-2 italic" style={{ borderColor: 'var(--primary)', color: 'var(--text-secondary)' }}>{children}</blockquote>
                   },
                   a({ href, children }) {
-                    return <a href={href} className="underline underline-offset-2" style={{ color: 'var(--primary)' }} target="_blank" rel="noopener noreferrer">{children}</a>
+                    if (!href) return <span>{children}</span>
+                    let url: URL | undefined
+                    try { url = new URL(href) } catch { return <span>{children}</span> }
+                    if (url.protocol !== 'https:' && url.protocol !== 'http:' && url.protocol !== 'mailto:') return <span>{children}</span>
+                    return <a href={url.href} className="underline underline-offset-2" style={{ color: 'var(--primary)' }} target="_blank" rel="noopener noreferrer">{children}</a>
                   },
                 }}
               >
